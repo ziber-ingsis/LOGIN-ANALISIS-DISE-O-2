@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión - Sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        success: '#00B42A',
+                        danger: '#F53F3F',
+                        warning: '#FF7D00',
+                        neutral: '#1D2129',
+                        light: '#F2F3F5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .input-focus {
+                @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
+            }
+            .shadow-soft {
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center font-sans">
+    <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-soft border border-gray-100">
+        <!-- Encabezado -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i class="fa fa-lock text-2xl"></i>
+            </div>
+            <h2 class="text-[clamp(1.5rem,3vw,1.8rem)] font-bold text-neutral mb-1">Inicio de Sesión</h2>
+            <p class="text-gray-500 text-sm">Ingrese su contraseña para acceder al sistema</p>
+        </div>
+
+        <!-- Formulario -->
+        <form id="loginForm" class="space-y-6">
+            <div class="space-y-2">
+                <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 transition-all duration-200 input-focus text-base"
+                        placeholder="Ingrese contraseña..."
+                        autocomplete="off"
+                    >
+                    <button type="button" id="togglePass" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fa fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botón -->
+            <button 
+                type="submit" 
+                class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[0.98] active:scale-[1.0] shadow-lg hover:shadow-primary/20"
+            >
+                Ingresar
+            </button>
+        </form>
+
+        <!-- Mensajes de estado -->
+        <div id="messageBox" class="mt-6 hidden">
+            <div id="successMsg" class="hidden p-4 rounded-lg bg-success/10 text-success flex items-center gap-3">
+                <i class="fa fa-check-circle text-lg"></i>
+                <span>ACCESO VÁLIDO .... INGRESANDO AL SISTEMA</span>
+            </div>
+            <div id="errorMsg" class="hidden p-4 rounded-lg bg-danger/10 text-danger flex items-center gap-3">
+                <i class="fa fa-times-circle text-lg"></i>
+                <span id="errorText"></span>
+            </div>
+            <div id="blockedMsg" class="hidden p-4 rounded-lg bg-warning/10 text-warning flex items-center gap-3">
+                <i class="fa fa-exclamation-circle text-lg"></i>
+                <span>INGRESASTE 3 INTENTOS INCORRECTOS, INGRESO BLOQUEADO</span>
+            </div>
+        </div>
+
+        <!-- Intentos restantes -->
+        <div class="mt-4 text-center text-xs text-gray-500">
+            Intentos restantes: <span id="attemptsLeft">3</span>
+        </div>
+    </div>
+
+    <script>
+        // Lógica del sistema
+        const CONTRASEÑA_CORRECTA = "zibeon";
+        let contadorIntentos = 0;
+        const MAX_INTENTOS = 3;
+
+        // Elementos del DOM
+        const form = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('password');
+        const togglePassBtn = document.getElementById('togglePass');
+        const messageBox = document.getElementById('messageBox');
+        const successMsg = document.getElementById('successMsg');
+        const errorMsg = document.getElementById('errorMsg');
+        const blockedMsg = document.getElementById('blockedMsg');
+        const errorText = document.getElementById('errorText');
+        const attemptsLeft = document.getElementById('attemptsLeft');
+
+        // Mostrar/ocultar contraseña
+        togglePassBtn.addEventListener('click', () => {
+            const isPass = passwordInput.type === 'password';
+            passwordInput.type = isPass ? 'text' : 'password';
+            togglePassBtn.innerHTML = isPass ? '<i class="fa fa-eye"></i>' : '<i class="fa fa-eye-slash"></i>';
+        });
+
+        // Manejar envío del formulario
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Ocultar mensajes anteriores
+            successMsg.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            blockedMsg.classList.add('hidden');
+            messageBox.classList.remove('hidden');
+
+            const claveIngresada = passwordInput.value.trim();
+
+            // Validar contraseña
+            if (claveIngresada === CONTRASEÑA_CORRECTA) {
+                // Acceso válido
+                successMsg.classList.remove('hidden');
+                form.classList.add('hidden');
+                return;
+            } else {
+                // Contraseña incorrecta
+                contadorIntentos++;
+                errorText.textContent = "CONTRASEÑA INCORRECTA";
+                errorMsg.classList.remove('hidden');
+                
+                // Actualizar intentos restantes
+                const restantes = MAX_INTENTOS - contadorIntentos;
+                attemptsLeft.textContent = restantes;
+
+                // Verificar si alcanzó el límite
+                if (contadorIntentos >= MAX_INTENTOS) {
+                    form.classList.add('hidden');
+                    errorMsg.classList.add('hidden');
+                    blockedMsg.classList.remove('hidden');
+                }
+            }
+
+            // Limpiar input
+            passwordInput.value = "";
+        });
+    </script>
+</body>
+</html>
